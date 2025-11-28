@@ -1,7 +1,7 @@
 <template>
   <div id="app">
     <!-- NAVBAR -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm nav-fixed">
       <div class="container-wide d-flex align-items-center">
         <a class="navbar-brand fw-bold fs-4" href="#">After-School</a>
 
@@ -83,6 +83,7 @@ export default {
 </script>
 
 <style>
+
 html,
 body {
   margin: 0;
@@ -98,26 +99,41 @@ body {
   background-position: center;
 }
 
-/* white overlay so text is readable */
+/* Apply overlay to entire app including NAVBAR */
 #app {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  background: rgba(255, 255, 255, 0.65);
-  backdrop-filter: blur(2px);
+
+  /* Transparent overlay everywhere */
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(3px);
 }
 
+/* Navbar visible + floating on top */
+.navbar {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  background: rgba(13, 110, 253, 0.95) !important; /* Strong Blue */
+  backdrop-filter: blur(4px);
+}
+
+/* Center content */
 .container-wide {
   width: 100%;
   max-width: 1200px;
   margin: 0 auto;
 }
 
+/* Ensure the top content is not hidden behind Nav */
 .page-wrapper {
   width: 100%;
   max-width: 1200px;
-  margin: 2rem auto 3rem auto;
-  padding: 0 1.5rem;
+  margin: 0 auto 3rem auto;
+
+  padding: 5rem 1.5rem 2rem; 
+  /* TOP padding increased because navbar height ~60px */
   flex: 1;
 }
 
@@ -128,6 +144,7 @@ body {
   font-size: 0.85rem;
 }
 
+/* Hover effects */
 .nav-link:hover {
   color: #ffe082 !important;
 }
@@ -135,4 +152,5 @@ body {
 .navbar-brand:hover {
   color: #ffeb3b !important;
 }
+
 </style>

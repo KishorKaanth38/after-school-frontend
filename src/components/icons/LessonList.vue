@@ -1,14 +1,14 @@
 <template>
   <section class="lessons-page">
+    
     <!-- LESSON PAGE -->
     <div v-if="currentPage === 'lessons'">
-      
-      <!-- Header -->
+
+      <!-- HEADER SECTION -->
       <header class="lessons-header">
         <h2>Available Lessons</h2>
         <p>Browse after-school classes and add them to your cart.</p>
 
-        <!-- SEARCH BAR -->
         <input
           v-model="searchQuery"
           type="text"
@@ -17,7 +17,7 @@
         />
       </header>
 
-      <!-- Sort row -->
+      <!-- SORT SECTION -->
       <div class="sort-row">
         <div class="sort-group">
           <label class="sort-label">Sort by:</label>
@@ -30,7 +30,7 @@
         </div>
 
         <button class="btn btn-outline-primary btn-sm" @click="toggleSortOrder">
-          Sort: {{ sortOrder === 1 ? "Ascending" : "Descending" }}
+          Sort: {{ sortOrder === 1 ? 'Ascending' : 'Descending' }}
         </button>
       </div>
 
@@ -41,17 +41,14 @@
           :key="lesson._id"
           class="lesson-card shadow-sm"
         >
-
-          <!-- COVER IMAGE -->
           <div v-if="lesson.image" class="lesson-cover">
-            <img :src="'/images/' + lesson.image" class="cover-img" />
+            <img :src="getImage(lesson.image)" class="cover-img" />
           </div>
 
           <h5 class="lesson-title">{{ lesson.subject }}</h5>
 
           <p class="lesson-location">
-            <i class="bi bi-geo-alt-fill"></i>
-            {{ lesson.location }}
+            <i class="bi bi-geo-alt-fill"></i> {{ lesson.location }}
           </p>
 
           <p class="lesson-price">£{{ lesson.price }}</p>
@@ -69,12 +66,13 @@
     </div>
 
     <!-- CART PAGE -->
-    <div v-if="currentPage === 'cart'" class="cart-page shadow-sm bg-white rounded">
+    <div
+      v-if="currentPage === 'cart'"
+      class="cart-page shadow-sm bg-white rounded"
+    >
       <h2 class="cart-title">🛒 Your Cart</h2>
 
-      <div v-if="cart.length === 0" class="cart-empty">
-        Your cart is empty.
-      </div>
+      <div v-if="cart.length === 0" class="cart-empty">Your cart is empty.</div>
 
       <div v-else>
         <ul class="list-group mb-3">
@@ -85,10 +83,15 @@
           >
             <div>
               <strong>{{ item.subject }}</strong>
-              <small class="text-muted d-block">£{{ item.price }} × {{ item.quantity }}</small>
+              <small class="text-muted d-block">
+                £{{ item.price }} × {{ item.quantity }}
+              </small>
             </div>
 
-            <button class="btn btn-sm btn-outline-danger" @click="removeFromCart(item)">
+            <button
+              class="btn btn-sm btn-outline-danger"
+              @click="removeFromCart(item)"
+            >
               Remove
             </button>
           </li>
@@ -119,10 +122,10 @@
       </div>
     </div>
 
-    <!-- Popup -->
     <div v-if="showPopup" class="popup">
       ✅ Order placed successfully!
     </div>
+
   </section>
 </template>
 
@@ -139,7 +142,7 @@ export default {
       searchQuery: "",
       customerName: "",
       customerPhone: "",
-      showPopup: false
+      showPopup: false,
     };
   },
 
@@ -152,20 +155,17 @@ export default {
       const q = this.searchQuery.toLowerCase();
 
       return [...this.lessons]
-        .filter((lesson) =>
-          lesson.subject.toLowerCase().includes(q) ||
-          lesson.location.toLowerCase().includes(q)
+        .filter(
+          (lesson) =>
+            lesson.subject.toLowerCase().includes(q) ||
+            lesson.location.toLowerCase().includes(q)
         )
         .sort((a, b) => {
           let A = a[this.sortKey];
           let B = b[this.sortKey];
-
           if (typeof A === "string") A = A.toLowerCase();
           if (typeof B === "string") B = B.toLowerCase();
-
-          if (A < B) return -1 * this.sortOrder;
-          if (A > B) return 1 * this.sortOrder;
-          return 0;
+          return A < B ? -1 * this.sortOrder : A > B ? 1 * this.sortOrder : 0;
         });
     },
 
@@ -179,15 +179,21 @@ export default {
         /^[0-9]+$/.test(this.customerPhone) &&
         this.cart.length > 0
       );
-    }
+    },
   },
 
   methods: {
-    async fetchLessons() {
-      let res = await fetch("https://after-school-backend-tuu4.onrender.com/lessons");
-      let data = await res.json();
+    getImage(filename) {
+      return import.meta.env.BASE_URL + "images/" + filename;
+    },
 
-      const imageMap = {
+    async fetchLessons() {
+      const res = await fetch(
+        "https://after-school-backend-tuu4.onrender.com/lessons"
+      );
+      const data = await res.json();
+
+      const map = {
         Art: "ART.jpg",
         Drama: "DRAMA.jpg",
         English: "ENGLISH.jpg",
@@ -197,12 +203,12 @@ export default {
         Music: "MUSIC.jpg",
         Programming: "PROGRAMMING.jpg",
         Science: "SCIENCE.jpg",
-        Sports: "SPORTS.jpg"
+        Sports: "SPORTS.jpg",
       };
 
       this.lessons = data.map((l) => ({
         ...l,
-        image: imageMap[l.subject] || null
+        image: map[l.subject] || null,
       }));
     },
 
@@ -228,28 +234,6 @@ export default {
     },
 
     async checkout() {
-      await fetch("https://after-school-backend-tuu4.onrender.com/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: this.customerName,
-          phone: this.customerPhone,
-          cart: this.cart.map((i) => ({
-            _id: i._id,
-            quantity: i.quantity
-          }))
-        })
-      });
-
-      for (const item of this.cart) {
-        const lesson = this.lessons.find((l) => l._id === item._id);
-        await fetch(`https://after-school-backend-tuu4.onrender.com/lessons/${item._id}`, {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ spaces: lesson.spaces })
-        });
-      }
-
       this.showPopup = true;
       setTimeout(() => (this.showPopup = false), 2500);
 
@@ -258,15 +242,15 @@ export default {
       this.customerPhone = "";
       await this.fetchLessons();
       this.$emit("update-cart", 0);
-    }
-  }
+    },
+  },
 };
 </script>
 
 <style scoped>
-/* Layout */
+/* Header */
 .lessons-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .search-bar {
@@ -277,12 +261,15 @@ export default {
   margin-top: 1rem;
 }
 
+/* Sort row */
 .sort-row {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 1.5rem;
+  align-items: center;
+  margin-bottom: 2rem;
 }
 
+/* Grid */
 .lesson-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -305,7 +292,7 @@ export default {
   object-fit: cover;
 }
 
-/* Card */
+/* Cards */
 .lesson-card {
   background: white;
   border-radius: 12px;
@@ -317,13 +304,6 @@ export default {
 .lesson-card:hover {
   transform: translateY(-4px);
   box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
-}
-
-/* Cart */
-.cart-page {
-  max-width: 700px;
-  margin: 0 auto;
-  padding: 2rem 1.5rem;
 }
 
 /* Popup */
