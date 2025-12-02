@@ -104,16 +104,17 @@
           <div class="mb-2">
             <label class="form-label">Name</label>
             <input v-model="customerName" type="text" class="form-control" />
+            <p class="text-danger" v-if="nameError">{{ nameError }}</p>
           </div>
 
           <div class="mb-3">
             <label class="form-label">Phone</label>
             <input v-model="customerPhone" type="text" class="form-control" />
+            <p class="text-danger" v-if="phoneError">{{ phoneError }}</p>
           </div>
 
           <button
             class="btn btn-success w-100 fw-semibold"
-            :disabled="!isFormValid"
             @click="checkout"
           >
             Confirm Order
@@ -122,8 +123,14 @@
       </div>
     </div>
 
+    <!-- SUCCESS POPUP -->
     <div v-if="showPopup" class="popup">
       ✅ Order placed successfully!
+    </div>
+
+    <!-- ERROR POPUP -->
+    <div v-if="errorPopup" class="popup error-popup">
+      ❌ {{ errorPopup }}
     </div>
 
   </section>
@@ -145,6 +152,7 @@ export default {
       nameError: "",
       phoneError: "",
       showPopup: false,
+      errorPopup: "",
     };
   },
 
@@ -177,7 +185,6 @@ export default {
       return this.cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
     },
 
-    // SIMPLE FORM VALIDATION FOR THE DISABLED BUTTON
     isFormValid() {
       return (
         this.customerName.trim().length > 0 &&
@@ -238,47 +245,47 @@ export default {
       this.$emit("update-cart", this.cart.length);
     },
 
-    // --------------------------------------
-    // FRONTEND VALIDATION (name + phone)
-    // --------------------------------------
+    clearErrorPopup() {
+      setTimeout(() => (this.errorPopup = ""), 2000);
+    },
+
     validateCheckoutForm() {
       this.nameError = "";
       this.phoneError = "";
+      this.errorPopup = "";
 
-      // NAME REQUIRED
       if (!this.customerName.trim()) {
         this.nameError = "Name is required.";
+        this.errorPopup = "Please enter your name.";
+        this.clearErrorPopup();
+        return false;
       }
 
-      // PHONE REQUIRED
       if (!this.customerPhone.trim()) {
         this.phoneError = "Phone number is required.";
+        this.errorPopup = "Please enter a phone number.";
+        this.clearErrorPopup();
         return false;
       }
 
-      // ONLY NUMBERS
       if (!/^\d+$/.test(this.customerPhone)) {
         this.phoneError = "Phone number must contain only digits.";
+        this.errorPopup = "Phone number must contain only digits.";
+        this.clearErrorPopup();
         return false;
       }
 
-      // OPTIONAL: LENGTH RULE (matching backend)
-      if (
-        this.customerPhone.length < 7 ||
-        this.customerPhone.length > 15
-      ) {
+      if (this.customerPhone.length < 7 || this.customerPhone.length > 15) {
         this.phoneError = "Phone number length is invalid.";
+        this.errorPopup = "Phone number length is invalid.";
+        this.clearErrorPopup();
         return false;
       }
 
-      return this.nameError === "" && this.phoneError === "";
+      return true;
     },
 
-    // --------------------------------------
-    // CHECKOUT FUNCTION (uses validation)
-    // --------------------------------------
     async checkout() {
-      // First validate on frontend
       if (!this.validateCheckoutForm()) return;
 
       try {
@@ -300,17 +307,15 @@ export default {
 
         const data = await res.json();
 
-        // BACKEND ERROR?
         if (!res.ok) {
-          alert(data.error || "Failed to place order.");
+          this.errorPopup = data.error || "Failed to place order.";
+          this.clearErrorPopup();
           return;
         }
 
-        // SUCCESS POPUP
         this.showPopup = true;
         setTimeout(() => (this.showPopup = false), 2500);
 
-        // RESET FORM
         this.cart = [];
         this.customerName = "";
         this.customerPhone = "";
@@ -320,13 +325,13 @@ export default {
 
       } catch (err) {
         console.error("Checkout failed:", err);
-        alert("Failed to place order!");
+        this.errorPopup = "Failed to place order!";
+        this.clearErrorPopup();
       }
     },
   },
 };
 </script>
-
 
 <style scoped>
 /* Header */
@@ -396,5 +401,9 @@ export default {
   color: #fff;
   padding: 12px 20px;
   border-radius: 8px;
+}
+
+.error-popup {
+  background: #dc3545;
 }
 </style>
