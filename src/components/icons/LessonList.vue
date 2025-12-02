@@ -142,6 +142,8 @@ export default {
       searchQuery: "",
       customerName: "",
       customerPhone: "",
+      nameError: "",
+      phoneError: "",
       showPopup: false,
     };
   },
@@ -158,7 +160,9 @@ export default {
         .filter(
           (lesson) =>
             lesson.subject.toLowerCase().includes(q) ||
-            lesson.location.toLowerCase().includes(q)
+            lesson.location.toLowerCase().includes(q) ||
+            lesson.price.toString().includes(q) ||
+            lesson.spaces.toString().includes(q)
         )
         .sort((a, b) => {
           let A = a[this.sortKey];
@@ -173,9 +177,10 @@ export default {
       return this.cart.reduce((sum, i) => sum + i.price * i.quantity, 0);
     },
 
+    // SIMPLE FORM VALIDATION FOR THE DISABLED BUTTON
     isFormValid() {
       return (
-        /^[A-Za-z\s]+$/.test(this.customerName) &&
+        this.customerName.trim().length > 0 &&
         /^[0-9]+$/.test(this.customerPhone) &&
         this.cart.length > 0
       );
@@ -233,19 +238,95 @@ export default {
       this.$emit("update-cart", this.cart.length);
     },
 
-    async checkout() {
-      this.showPopup = true;
-      setTimeout(() => (this.showPopup = false), 2500);
+    // --------------------------------------
+    // FRONTEND VALIDATION (name + phone)
+    // --------------------------------------
+    validateCheckoutForm() {
+      this.nameError = "";
+      this.phoneError = "";
 
-      this.cart = [];
-      this.customerName = "";
-      this.customerPhone = "";
-      await this.fetchLessons();
-      this.$emit("update-cart", 0);
+      // NAME REQUIRED
+      if (!this.customerName.trim()) {
+        this.nameError = "Name is required.";
+      }
+
+      // PHONE REQUIRED
+      if (!this.customerPhone.trim()) {
+        this.phoneError = "Phone number is required.";
+        return false;
+      }
+
+      // ONLY NUMBERS
+      if (!/^\d+$/.test(this.customerPhone)) {
+        this.phoneError = "Phone number must contain only digits.";
+        return false;
+      }
+
+      // OPTIONAL: LENGTH RULE (matching backend)
+      if (
+        this.customerPhone.length < 7 ||
+        this.customerPhone.length > 15
+      ) {
+        this.phoneError = "Phone number length is invalid.";
+        return false;
+      }
+
+      return this.nameError === "" && this.phoneError === "";
+    },
+
+    // --------------------------------------
+    // CHECKOUT FUNCTION (uses validation)
+    // --------------------------------------
+    async checkout() {
+      // First validate on frontend
+      if (!this.validateCheckoutForm()) return;
+
+      try {
+        const res = await fetch(
+          "https://after-school-backend-tuu4.onrender.com/orders",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              name: this.customerName,
+              phone: this.customerPhone,
+              cart: this.cart.map((i) => ({
+                _id: i._id,
+                quantity: i.quantity,
+              })),
+            }),
+          }
+        );
+
+        const data = await res.json();
+
+        // BACKEND ERROR?
+        if (!res.ok) {
+          alert(data.error || "Failed to place order.");
+          return;
+        }
+
+        // SUCCESS POPUP
+        this.showPopup = true;
+        setTimeout(() => (this.showPopup = false), 2500);
+
+        // RESET FORM
+        this.cart = [];
+        this.customerName = "";
+        this.customerPhone = "";
+
+        await this.fetchLessons();
+        this.$emit("update-cart", 0);
+
+      } catch (err) {
+        console.error("Checkout failed:", err);
+        alert("Failed to place order!");
+      }
     },
   },
 };
 </script>
+
 
 <style scoped>
 /* Header */
