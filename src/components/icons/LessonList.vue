@@ -261,6 +261,13 @@ export default {
         return false;
       }
 
+      if (!/^[A-Za-z\s]+$/.test(this.customerName)) {
+        this.nameError = "Name can only contain letters.";
+        this.errorPopup = "Name must contain letters only.";
+        this.clearErrorPopup();
+        return false;
+      }
+
       if (!this.customerPhone.trim()) {
         this.phoneError = "Phone number is required.";
         this.errorPopup = "Please enter a phone number.";
