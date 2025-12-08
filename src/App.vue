@@ -3,7 +3,7 @@
     <!-- NAVBAR -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm nav-fixed">
       <div class="container-wide d-flex align-items-center">
-        <a class="navbar-brand fw-bold fs-4" href="#">After-School</a>
+        <a class="navbar-brand fw-bold fs-4" href="#">After Classes</a>
 
         <button
           class="navbar-toggler ms-auto"
@@ -92,7 +92,6 @@ body {
   font-family: "Inter", sans-serif;
 
   /* FULL BACKGROUND IMAGE */
-  background-image: url("/images/BACKGROUND.jpg");
   background-size: cover;
   background-repeat: no-repeat;
   background-attachment: fixed;
