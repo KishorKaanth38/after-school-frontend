@@ -57,7 +57,7 @@
 </template>
 
 <script>
-import LessonList from "./components/icons/LessonList.vue";
+import LessonList from "./LessonList.vue";
 
 export default {
   components: { LessonList },
